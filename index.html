@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f6f0e3">
+<meta name="description" content="어르신을 위한 도형과 옛날 물건 기억력 카드 짝 맞추기 게임">
+<title>추억의 카드 짝 맞추기</title>
+<style>
+  :root {font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;color:#27392d;background:#f6f0e3;font-synthesis:none}
+  * {box-sizing:border-box}
+  body {margin:0;min-height:100vh;background:linear-gradient(180deg,#f5e8cc 0%,#fdf9f0 36%,#f6f0e3 100%)}
+  main {max-width:1080px;padding:25px 16px 45px;margin:auto}
+  header {text-align:center;margin:0 auto 20px}
+  h1 {margin:5px 0 8px;font-size:clamp(29px,4vw,43px);line-height:1.3;color:#294a34}
+  .intro {margin:0;font-size:clamp(17px,2.1vw,22px);line-height:1.5}
+  .panel {background:#fffdfa;border:2px solid #e3d9c3;border-radius:22px;box-shadow:0 7px 23px #5e4e3117;padding:20px;margin-top:16px}
+  .controlbar {display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .selectors {display:flex;gap:22px;flex-wrap:wrap}
+  fieldset {border:0;padding:0;margin:0;min-width:0}
+  legend {font-size:18px;font-weight:900;margin-bottom:8px}
+  .options {display:flex;gap:8px;flex-wrap:wrap}
+  .choice {position:relative;cursor:pointer}
+  .choice input {position:absolute;opacity:0;width:1px;height:1px}
+  .choice span {display:block;border:2px solid #bdb9a7;border-radius:12px;background:#fff;padding:10px 16px;font-size:18px;font-weight:750;min-height:50px;line-height:1.45;white-space:nowrap}
+  .choice input:checked + span {border-color:#285b45;background:#e0f0e5;color:#163f2d;box-shadow:inset 0 0 0 1px #285b45}
+  .choice input:focus-visible + span {outline:4px solid #e3a04f;outline-offset:2px}
+  button {font:inherit;cursor:pointer}
+  .restart {border:0;background:#285b45;color:white;border-radius:13px;padding:12px 20px;min-height:53px;font-size:19px;font-weight:900}
+  .restart:hover {background:#1b4331}
+  button:focus-visible {outline:4px solid #eda83c;outline-offset:3px}
+  .gamebar {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:15px}
+  .stats {display:flex;gap:10px;flex-wrap:wrap}
+  .stat {border-radius:12px;background:#edf2e7;padding:10px 16px;font-size:19px;font-weight:800;line-height:1.35}
+  .stat b {font-size:23px;color:#265b42}
+  .status {min-height:38px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;font-size:20px;font-weight:850;margin:17px 0 0;line-height:1.5}
+  .status p {margin:0}
+  .board {display:grid;grid-template-columns:repeat(var(--cols,5),minmax(0,1fr));gap:10px}
+  .card {position:relative;width:100%;min-width:0;aspect-ratio:.91;max-height:165px;border:3px solid #365f4c;border-radius:16px;padding:6px;box-shadow:0 3px 0 #b8c3ac;touch-action:manipulation;transition:background-color .18s,transform .1s}
+  .card:active:not(:disabled) {transform:translateY(2px)}
+  .card.down {background:#416a84;border-color:#305672;color:white}
+  .card.up {background:#fffdf5;border-color:#49745f}
+  .card.matched {background:#e4f1e5;border-color:#548463;box-shadow:none;cursor:default}
+  .back {height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+  .back .flower {font-size:clamp(33px,4vw,55px);line-height:1}
+  .back .word {font-size:clamp(13px,1.8vw,18px);font-weight:800}
+  .face {height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+  .face svg {display:block;width:min(100%,125px);height:calc(100% - 25px);min-height:0;flex:1}
+  .face .name {font-size:clamp(13px,1.65vw,19px);font-weight:900;color:#27392d;white-space:nowrap;line-height:1.4}
+  .match-badge {position:absolute;top:3px;right:5px;font-size:20px;color:#257443;font-weight:900;line-height:1}
+  .footnote {text-align:center;font-size:17px;line-height:1.5;color:#50634e;margin:16px 0 0}
+  @media(max-width:720px) {
+    main {padding:16px 10px 35px}
+    .panel {padding:13px;border-radius:17px}
+    .selectors {gap:15px}
+    .choice span {padding:9px 12px;font-size:16px;min-height:47px}
+    .board {grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+    .card {border-width:2px;border-radius:11px;padding:3px;max-height:none;aspect-ratio:.9}
+    .face .name {font-size:clamp(11px,3.2vw,16px)}
+    .back .flower {font-size:clamp(28px,8vw,43px)}
+    .back .word {font-size:clamp(10px,2.9vw,14px)}
+    .stat {font-size:16px;padding:8px 11px}
+    .stat b {font-size:19px}
+    .status {font-size:18px}
+  }
+  @media(max-width:370px) {.board {gap:5px}.card {border-radius:9px}.choice span {padding:8px 10px}}
+  @media(prefers-reduced-motion:reduce) {.card {transition:none}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>추억의 카드 짝 맞추기</h1>
+  <p class="intro">카드 두 장을 눌러 <strong>같은 그림</strong>을 찾아보세요.</p>
+</header>
+<section class="panel" aria-label="게임 설정">
+  <div class="controlbar">
+    <div class="selectors">
+      <fieldset><legend>그림 종류</legend><div class="options">
+        <label class="choice"><input type="radio" name="theme" value="shapes" checked><span>🔷 기본 도형</span></label>
+        <label class="choice"><input type="radio" name="theme" value="objects"><span>🏺 옛날 물건</span></label>
+      </div></fieldset>
+      <fieldset><legend>그림 개수</legend><div class="options">
+        <label class="choice"><input type="radio" name="pairs" value="6"><span>6쌍</span></label>
+        <label class="choice"><input type="radio" name="pairs" value="8"><span>8쌍</span></label>
+        <label class="choice"><input type="radio" name="pairs" value="10" checked><span>10쌍</span></label>
+        <label class="choice"><input type="radio" name="pairs" value="12"><span>12쌍</span></label>
+      </div></fieldset>
+    </div>
+    <button class="restart" id="restart" type="button">↻ 새 게임 시작</button>
+  </div>
+</section>
+<section class="panel" aria-label="카드 짝 맞추기 게임">
+  <div class="gamebar">
+    <div class="stats"><div class="stat">맞힌 카드 <b id="matched">0 / 20장</b></div><div class="stat">시도 <b id="attempts">0회</b></div></div>
+    <div id="gameinfo" style="font-size:17px;font-weight:800;color:#486551">기본 도형 · 카드 20장</div>
+  </div>
+  <div class="board" id="board" aria-label="카드 뒤집기 판"></div>
+  <div class="status" id="status" role="status" aria-live="polite"><p id="message">첫 번째 카드를 눌러보세요!</p></div>
+</section>
+<p class="footnote">⏳ 시간 제한이 없어요. 천천히 하셔도 괜찮습니다.</p>
+</main>
+<script>
+'use strict';
+// 모든 그림은 HTML 내부 SVG로 제작됩니다. 서버나 인터넷 연결이 필요하지 않습니다.
+const svg = body => `<svg viewBox="0 0 100 100" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+const shapeData = [
+  ['원',svg('<circle cx="50" cy="50" r="33" fill="#E15853"/>')],
+  ['네모',svg('<rect x="18" y="18" width="64" height="64" rx="4" fill="#377CD6"/>')],
+  ['세모',svg('<polygon points="50,13 90,82 10,82" fill="#EDB72D"/>')],
+  ['마름모',svg('<polygon points="50,10 89,50 50,90 11,50" fill="#33A17D"/>')],
+  ['별',svg('<polygon points="50,7 62,36 93,39 69,59 76,90 50,73 24,90 31,59 7,39 38,36" fill="#9566D5"/>')],
+  ['하트',svg('<path d="M50 88 C25 69 11 55 12 36 C13 13 38 11 50 29 C62 11 87 13 88 36 C89 55 75 69 50 88Z" fill="#E76C9A"/>')],
+  ['육각형',svg('<polygon points="29,13 71,13 92,50 71,87 29,87 8,50" fill="#D5793E"/>')],
+  ['타원',svg('<ellipse cx="50" cy="50" rx="43" ry="28" fill="#3CABC1"/>')],
+  ['오각형',svg('<polygon points="50,7 91,38 75,88 25,88 9,38" fill="#84963C"/>')],
+  ['십자',svg('<path d="M38 10 H62 V38 H90 V62 H62 V90 H38 V62 H10 V38 H38Z" fill="#6166B9"/>')],
+  ['반달',svg('<path d="M63 10 A40 40 0 1 0 88 72 A34 34 0 0 1 63 10Z" fill="#456B9D"/>')],
+  ['반원',svg('<path d="M13 74 A37 37 0 0 1 87 74Z" fill="#2FA797"/>')]
+].map(([name,art],i)=>({id:'s'+i,name,art}));
+const objectData = [
+  ['다듬잇돌',svg('<ellipse cx="50" cy="85" rx="40" ry="7" fill="#d4d6cd"/><path d="M17 37 Q18 27 31 27 H69 Q82 27 83 37 L81 66 Q80 73 69 74 H31 Q20 73 19 66Z" fill="#9da5a1" stroke="#596762" stroke-width="3"/><ellipse cx="50" cy="36" rx="33" ry="10" fill="#c9ceca" stroke="#707e78" stroke-width="2"/><path d="M30 74 L27 84 H42 L44 74 M57 74 L59 84 H74 L71 74" fill="#727975"/>')],
+  ['방망이',svg('<g transform="rotate(-35 50 50)"><rect x="42" y="51" width="16" height="43" rx="6" fill="#9b6638" stroke="#6a442a" stroke-width="3"/><rect x="29" y="7" width="42" height="52" rx="17" fill="#cb925a" stroke="#88552d" stroke-width="3"/><path d="M42 13 Q36 33 43 52 M57 12 Q65 30 57 51" stroke="#ecc093" stroke-width="4" fill="none"/></g>')],
+  ['절구',svg('<path d="M62 43 L79 7" fill="none" stroke="#8b633c" stroke-width="10" stroke-linecap="round"/><path d="M17 45 L24 84 Q50 96 76 84 L83 45Z" fill="#a99d87" stroke="#6c6255" stroke-width="3"/><ellipse cx="50" cy="45" rx="34" ry="12" fill="#d0c5b1" stroke="#6c6255" stroke-width="3"/><ellipse cx="50" cy="45" rx="25" ry="6" fill="#746958"/>')],
+  ['지게',svg('<path d="M37 9 L23 91 M63 9 L77 91" stroke="#976337" stroke-width="8" stroke-linecap="round"/><path d="M37 9 L50 18 L63 9 M32 39 H68 M27 65 H73" stroke="#c18b50" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M34 37 Q10 48 28 70 M66 37 Q90 48 72 70" stroke="#6f926a" stroke-width="5" fill="none"/>')],
+  ['맷돌',svg('<ellipse cx="50" cy="74" rx="39" ry="15" fill="#8f9694" stroke="#596460" stroke-width="3"/><path d="M11 58 V74 Q50 93 89 74 V58" fill="#8f9694" stroke="#596460" stroke-width="3"/><ellipse cx="50" cy="57" rx="39" ry="15" fill="#c0c6c0" stroke="#596460" stroke-width="3"/><circle cx="50" cy="57" r="6" fill="#737b77"/><path d="M70 48 V20" stroke="#9e6e3b" stroke-width="8" stroke-linecap="round"/>')],
+  ['가마솥',svg('<path d="M21 43 Q15 73 35 81 H65 Q85 73 79 43Z" fill="#5c666b" stroke="#2e3539" stroke-width="3"/><ellipse cx="50" cy="43" rx="35" ry="10" fill="#606a6e" stroke="#293338" stroke-width="3"/><path d="M24 34 Q24 19 38 17 H62 Q76 19 76 34" fill="#444f55" stroke="#2e3539" stroke-width="3"/><path d="M39 80 L34 92 M61 80 L66 92" stroke="#333e42" stroke-width="7"/><path d="M20 48 H12 M80 48 H88" stroke="#333e42" stroke-width="7" stroke-linecap="round"/>')],
+  ['호롱불',svg('<path d="M38 69 H62 L67 84 H33Z" fill="#947a49" stroke="#705633" stroke-width="3"/><ellipse cx="50" cy="69" rx="19" ry="7" fill="#b2a078"/><path d="M40 23 Q38 10 50 5 Q62 17 60 25 Q58 39 50 41 Q42 37 40 23Z" fill="#efb146"/><path d="M46 27 Q46 19 50 13 Q55 22 54 29Z" fill="#fce09a"/><path d="M50 41 V65" stroke="#705633" stroke-width="5"/><path d="M33 88 H67" stroke="#705633" stroke-width="5" stroke-linecap="round"/>')],
+  ['키',svg('<path d="M50 12 Q10 14 12 51 Q14 82 50 86 Q86 82 88 51 Q90 14 50 12Z" fill="#d5b17a" stroke="#9d7547" stroke-width="3"/><path d="M22 39 L77 39 M19 52 L81 52 M26 64 L74 64 M39 18 V80 M52 18 V81 M65 20 V77" stroke="#9e7648" stroke-width="3" fill="none"/>')],
+  ['부채',svg('<path d="M50 73 L9 36 Q50 -8 91 36Z" fill="#f1db9c" stroke="#ad8552" stroke-width="3"/><path d="M50 73 L17 31 M50 73 L32 18 M50 73 L50 12 M50 73 L68 18 M50 73 L83 31" stroke="#9c7240" stroke-width="2"/><path d="M50 73 L50 95" stroke="#9c7240" stroke-width="7" stroke-linecap="round"/><circle cx="50" cy="73" r="5" fill="#875b33"/>')],
+  ['장독',svg('<path d="M23 30 Q15 50 23 78 Q27 88 50 88 Q73 88 77 78 Q85 50 77 30Z" fill="#a96b40" stroke="#7e462b" stroke-width="3"/><ellipse cx="50" cy="30" rx="27" ry="9" fill="#804c2e"/><path d="M21 27 Q23 17 50 17 Q77 17 79 27" fill="#ba8250" stroke="#7e462b" stroke-width="3"/><ellipse cx="50" cy="18" rx="31" ry="7" fill="#a96b40" stroke="#7e462b" stroke-width="3"/><path d="M30 63 Q50 72 70 63" stroke="#c8925e" stroke-width="4" fill="none"/>')],
+  ['물레',svg('<circle cx="48" cy="48" r="32" fill="none" stroke="#a67642" stroke-width="7"/><circle cx="48" cy="48" r="7" fill="#a67642"/><path d="M48 16 V80 M16 48 H80 M25 25 L71 71 M71 25 L25 71" stroke="#a67642" stroke-width="3"/><path d="M19 87 H80 M40 80 L35 87 M57 80 L62 87" stroke="#755230" stroke-width="6" stroke-linecap="round"/>')],
+  ['짚신',svg('<path d="M16 72 Q22 42 61 47 Q86 49 87 72 Q76 86 49 84 Q27 84 16 72Z" fill="#d9ba77" stroke="#97763e" stroke-width="3"/><path d="M20 68 Q45 76 82 68 M30 53 Q36 68 44 80 M43 48 Q49 65 58 82 M58 48 Q63 64 72 76" stroke="#9d7d48" stroke-width="3" fill="none"/><path d="M39 57 Q47 43 64 56 M34 65 Q47 56 71 66" stroke="#806238" stroke-width="4" fill="none"/>')]
+].map(([name,art],i)=>({id:'o'+i,name,art}));
+
+const board=document.getElementById('board');
+const matchedEl=document.getElementById('matched');
+const attemptsEl=document.getElementById('attempts');
+const message=document.getElementById('message');
+const gameinfo=document.getElementById('gameinfo');
+const MISMATCH_DELAY_MS = 1800;
+let deck=[],opened=[],matched=0,attempts=0,locked=false,total=10;
+let mismatchTimer;
+function shuffle(list) {for(let i=list.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}return list;}
+function selected(name){return document.querySelector(`input[name="${name}"]:checked`).value;}
+function start(){
+  clearTimeout(mismatchTimer);
+  total=Number(selected('pairs'));
+  const items=shuffle([...(selected('theme')==='shapes'?shapeData:objectData)]).slice(0,total);
+  deck=shuffle(items.flatMap((item)=>[{...item,key:item.id+'a',revealed:false,matched:false},{...item,key:item.id+'b',revealed:false,matched:false}]));
+  opened=[];matched=0;attempts=0;locked=false;
+  board.style.setProperty('--cols',total===12?6:total===10?5:4);
+  gameinfo.textContent=`${selected('theme')==='shapes'?'기본 도형':'옛날 물건'} · 카드 ${total*2}장`;
+  board.setAttribute('aria-label',`${total*2}장의 카드`);
+  message.textContent='첫 번째 카드를 눌러보세요!';
+  render();
+}
+function render(){
+  matchedEl.textContent=`${matched*2} / ${total*2}장`;attemptsEl.textContent=`${attempts}회`;
+  board.replaceChildren();
+  deck.forEach((card,i)=>{
+    const btn=document.createElement('button');btn.type='button';
+    btn.className=`card ${card.matched?'matched':card.revealed?'up':'down'}`;
+    btn.disabled=card.matched;
+    if(locked)btn.setAttribute('aria-disabled','true');
+    btn.setAttribute('aria-label',(card.matched||card.revealed)?`${i+1}번 카드: ${card.name}${card.matched?' (짝 맞춤)':''}`:`${i+1}번 뒤집힌 카드`);
+    btn.setAttribute('aria-pressed',String(card.revealed||card.matched));
+    if(card.revealed||card.matched){
+      const face=document.createElement('span');face.className='face';
+      face.innerHTML=card.art;
+      const label=document.createElement('span');label.className='name';label.textContent=card.name;face.appendChild(label);
+      btn.appendChild(face);
+      if(card.matched){const mark=document.createElement('span');mark.className='match-badge';mark.textContent='✓';mark.setAttribute('aria-hidden','true');btn.appendChild(mark);}
+    } else {
+      btn.innerHTML='<span class="back" aria-hidden="true"><span class="flower">✿</span><span class="word">기억 카드</span></span>';
+    }
+    btn.addEventListener('click',()=>flip(i));board.appendChild(btn);
+  });
+}
+function flip(i){
+  const card=deck[i];if(locked||card.revealed||card.matched)return;
+  const keepFocus=board.contains(document.activeElement);
+  card.revealed=true;opened.push(i);
+  if(opened.length===1){message.textContent='짝이 되는 그림을 찾아보세요.';render();if(keepFocus)board.children[i].focus();return;}
+  attempts++;
+  const [a,b]=opened;
+  if(deck[a].id===deck[b].id){
+    deck[a].matched=deck[b].matched=true;matched++;opened=[];
+    message.textContent=matched===total?`🎉 축하합니다! ${attempts}번 시도하여 ${total}쌍을 모두 찾으셨어요!`:`👏 맞았어요! ${card.name} 한 쌍을 찾으셨어요.`;
+  }else{
+    locked=true;message.textContent='두 그림이 달라요. 잠시 후 카드가 다시 뒤집혀요.';
+    mismatchTimer=setTimeout(closeUnmatched,MISMATCH_DELAY_MS);
+  }
+  render();
+  if(keepFocus){
+    if(locked)board.children[i].focus();
+    else if(matched===total)document.getElementById('restart').focus();
+    else board.querySelector('.card.down')?.focus();
+  }
+}
+function closeUnmatched(){
+  if(!locked)return;
+  const focusedIndex=Array.from(board.children).indexOf(document.activeElement);
+  for(const i of opened)deck[i].revealed=false;
+  opened=[];locked=false;message.textContent='다시 두 장을 골라보세요.';
+  render();
+  if(focusedIndex>=0)board.children[focusedIndex].focus();
+}
+document.getElementById('restart').addEventListener('click',start);
+document.querySelectorAll('input[name="theme"], input[name="pairs"]').forEach(el=>el.addEventListener('change',start));
+start();
+</script>
+</body>
+</html>
